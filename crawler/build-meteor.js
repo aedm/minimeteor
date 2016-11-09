@@ -1,23 +1,23 @@
 "use strict";
 
-const spawnSync = require('child_process').spawnSync;
+const spawn = require('child_process').spawn;
 const execSync = require('child_process').execSync;
 const fs = require('fs');
 const DockerHub = require("./lib/dockerhub.js");
+const stream = require('stream');
 
 const NodeLabel = "NODE_VERSION=";
 const QUEUE_FILE = "MINIMETEOR_ALPINE_NODE_BUILD_QUEUE_FILE";
-const LOG_DIR = "MINIMETEOR_LOG_DIR";
 const DOCKER_OWNER = "aedm";
 const DOCKER_REPO = "meteor";
 
 function makeTempDir() {
-  let command = spawnSync("mktemp", ["-d"]);
-  if (command.error) {
+  try {
+    return execSync("mktemp -d").toString().trim();
+  } catch (ex) {
     console.error("Cannot create temp directory");
     process.exit(1);
   }
-  return command.stdout.toString().trim();
 }
 
 function getMeteorDockerfile(releaseURL) {
@@ -52,7 +52,16 @@ function appendNodeVersion(nodeVersion) {
 }
 
 
+function batch(command) {
+  console.log("Batching command: ", command);
+  let batchCommand = `echo "${command} >/home/aedm/mm.log" | batch`;
+  execSync(batchCommand, {stdio: "inherit"})
+}
+
+
 function buildMeteor(meteorVersion) {
+  console.log("wat");
+
   let tempDir = makeTempDir();
   console.log("Using temp directory", tempDir);
 
@@ -64,32 +73,36 @@ function buildMeteor(meteorVersion) {
   fs.writeFileSync(`${tempDir}/Dockerfile`, content);
 
   console.log("Running docker build...");
-  let dockerCommand = spawnSync("docker", ["build", "-t", dockerTag, tempDir],
+  let dockerProcess = spawn("docker", ["build", "-t", dockerTag, tempDir],
       {stdio: [null, null, "inherit"]});
 
-  let output = dockerCommand.stdout.toString();
-  let logDir = process.env[LOG_DIR];
-  fs.writeFileSync(logDir + "/build-" + meteorVersion + ".log", output);
+  let output = "";
+  dockerProcess.stdout.on('data', data => {
+    let s = data.toString();
+    process.stdout.write(s);
+    output += s;
+  });
+  dockerProcess.on('close', code => {
+    execSync(`rm -rf ${tempDir}`);
+    if (code) {
+      console.error("Build failed. Exit code:", code);
+      return;
+    }
+    console.log("Build succesful.");
 
-  if (dockerCommand.status) {
-    console.error("Build failed.");
-    return;
-  }
-  console.log("Build succesful.");
-  let nodeVersion = output.split("\n").find(s => s.startsWith(NodeLabel));
-  nodeVersion = nodeVersion.substring(NodeLabel.length).replace(/^(v)/,"");
-  appendNodeVersion(nodeVersion);
+    // Enqueue alpine build
+    let nodeVersion = output.split("\n").find(s => s.startsWith(NodeLabel));
+    nodeVersion = nodeVersion.substring(NodeLabel.length).replace(/^(v)/, "");
+    appendNodeVersion(nodeVersion);
+    let alpineBuildCommand = `node --harmony ${__dirname}/build-alpinebuilder.js`;
+    batch(alpineBuildCommand);
 
-  console.log("Pushing image to Docker Hub");
-  execSync(`docker push ${dockerTag}`, {stdio: "inherit"});
+    // Push docker image
+    console.log("Pushing image to Docker Hub");
+    execSync(`docker push ${dockerTag}`, {stdio: "inherit"});
 
-  console.log("Removing temp directory", tempDir);
-  spawnSync("rm", ["-rf", tempDir]);
-
-  // Enqueue alpine build
-  let alpineBuildCommand = `echo node --harmony ${__dirname}/build-alpinebuilder.js | batch`;
-  console.log("Executing: ", alpineBuildCommand);
-  execSync(alpineBuildCommand, {stdio: "inherit"})
+    console.log("Build successful:", dockerTag);
+  });
 }
 
 
@@ -98,6 +111,12 @@ function main() {
     console.log(`Usage: node build-meteor.js {meteor-version}`);
     process.exit(0);
   }
+
+  if (!process.env[QUEUE_FILE]) {
+    console.error(`Environment variable ${QUEUE_FILE} not found.`);
+    process.exit(1);
+  }
+
   let meteorVersion = process.argv[2];
 
   DockerHub.getDockerHubTags(DOCKER_OWNER, DOCKER_REPO)
