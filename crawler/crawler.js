@@ -31,12 +31,12 @@ function main() {
       }
     }
     console.log(`${releaseTags.length} release tags found.`);
-  //   return DockerHub.getDockerHubTags("mhart", "alpine-node");
-  // })
-  //
-  // // Process alpine-node Docker tags
-  // .then(tags => {
-  //   alpineDockerTags = tags;
+    return DockerHub.getDockerHubTags("mhart", "alpine-node");
+  })
+
+  // Process alpine-node Docker tags
+  .then(tags => {
+    alpineDockerTags = tags;
     return DockerHub.getDockerHubTags("aedm", "meteor");
   })
 

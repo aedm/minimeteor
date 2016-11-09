@@ -7,6 +7,7 @@ const DockerHub = require("./lib/dockerhub.js");
 
 const NodeLabel = "NODE_VERSION=";
 const QUEUE_FILE = "MINIMETEOR_ALPINE_NODE_BUILD_QUEUE_FILE";
+const LOG_DIR = "MINIMETEOR_LOG_DIR";
 const DOCKER_OWNER = "aedm";
 const DOCKER_REPO = "meteor";
 
@@ -67,7 +68,8 @@ function buildMeteor(meteorVersion) {
       {stdio: [null, null, "inherit"]});
 
   let output = dockerCommand.stdout.toString();
-  fs.writeFileSync("/var/log/minimeteor/build-" + meteorVersion + ".log", output);
+  let logDir = process.env[LOG_DIR];
+  fs.writeFileSync(logDir + "/build-" + meteorVersion + ".log", output);
 
   if (dockerCommand.status) {
     console.error("Build failed.");
