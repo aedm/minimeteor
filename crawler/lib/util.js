@@ -63,12 +63,12 @@ function enqueueBuild(file, tag) {
 }
 
 function spoolMeteorBuilder() {
-  let command = `${Config.NODE_CMD} ${__dirname}/meteorbuilder.js`;
+  let command = `${Config.NODE_CMD} ${__dirname}/../meteorbuilder.js`;
   enqueueCommand(command);
 }
 
 function spoolAlpineBuilder() {
-  let command = `${Config.NODE_CMD} ${__dirname}/alpinebuilder.js`;
+  let command = `${Config.NODE_CMD} ${__dirname}/../alpinebuilder.js`;
   enqueueCommand(command);
 }
 
