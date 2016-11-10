@@ -39,6 +39,14 @@ function enqueueCommand(command) {
   }
 }
 
+function exec(command) {
+  try {
+    execSync(command, {stdio: "inherit"});
+  } catch (ex) {
+    console.error(ex.toString());
+  }
+}
+
 function getQueueFile(file) {
   try {
     let fileContent = fs.readFileSync(file).toString();
@@ -159,6 +167,11 @@ function deqeueAlpineTag(builtTags) {
   return dequeueBuildTag(AlpineBuildQueueFile, builtTags);
 }
 
+function wipeDockerImages() {
+  console.log("Removing all Ddocker images");
+  exec("docker rm $(docker ps -aq); docker rmi $(docker images -q)");
+}
+
 
 module.exports = {
   enqueueCommand,
@@ -171,4 +184,6 @@ module.exports = {
   deqeueMeteorTag,
   deqeueAlpineTag,
   spoolMeteorBuilder,
+  exec,
+  wipeDockerImages
 };

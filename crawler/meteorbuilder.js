@@ -77,7 +77,7 @@ function buildMeteor(meteorVersion) {
     output += s;
   });
   dockerProcess.on('close', code => {
-    execSync(`rm -rf ${tempDir}`);
+    Util.exec(`rm -rf ${tempDir}`);
     if (code) {
       console.error("Build failed. Exit code:", code);
       return;
@@ -91,12 +91,9 @@ function buildMeteor(meteorVersion) {
 
     // Push docker image
     console.log("Pushing image to Docker Hub");
-    execSync(`docker push ${dockerTag}`, {stdio: "inherit"});
+    Util.exec(`docker push ${dockerTag}`);
 
-    // Push remove image
-    console.log("Removing image");
-    execSync(`docker rmi ${dockerTag}`, {stdio: "inherit"});
-
+    Util.wipeDockerImages();
     console.log("Build successful:", dockerTag);
   });
 }
@@ -107,6 +104,9 @@ function main() {
     console.log(`Usage: node build-meteor.js [meteor-version]`);
     process.exit(0);
   }
+
+  console.log("Meteor builder");
+
   let versionFromCommandLine = (process.argv.length == 3);
   let meteorVersion = null;
   if (versionFromCommandLine) {

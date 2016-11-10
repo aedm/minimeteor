@@ -8,6 +8,7 @@ module.exports = {
 
   // Meteor images repository
   DOCKER_METEOR_IMAGE: "meteor",
+  DOCKER_ALPINE_IMAGE: "meteor-alpinebuild",
 
   // Node.js command
   NODE_CMD: "node --harmony",

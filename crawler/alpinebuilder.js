@@ -8,10 +8,8 @@ const execSync = require('child_process').execSync;
 const fs = require('fs');
 const DockerHub = require("./lib/dockerhub.js");
 
-const QUEUE_FILE = "MINIMETEOR_ALPINE_NODE_BUILD_QUEUE_FILE";
-const DOCKER_OWNER = "aedm";
-const DOCKER_REPO = "meteor-alpinebuild";
-
+const Util = require("./lib/util.js");
+const Config = require("./lib/config.js");
 
 function makeTempDir() {
   let command = spawnSync("mktemp", ["-d"]);
@@ -30,41 +28,14 @@ RUN apk add --no-cache make gcc g++ python`;
 }
 
 
-function getNodeVersion(dockerTags) {
-  let queuePath = process.env[QUEUE_FILE];
-  if (!queuePath) {
-    console.error("Environment variable not found:", QUEUE_FILE);
-    process.exit(1);
-  }
-
-  let fileContent = fs.readFileSync(queuePath).toString();
-  let versionQueue = fileContent.split(/[\r\n]+/g).filter(line => line !== "");
-  console.log(`Found ${versionQueue.length} versions in ${queuePath}`);
-
-  let version = null;
-  while (versionQueue.length > 0) {
-    version = versionQueue.shift();
-    if (!dockerTags.find(tag => tag == version)) {
-      versionQueue.push(version);
-      break;
-    }
-  }
-  fs.writeFileSync(queuePath, versionQueue.join("\n"));
-
-  if (versionQueue.length == 0) {
-    console.log("Nothing to build.");
+function buildAlpineBuilder(dockerTags, tempDir) {
+  let nodeVersion = Util.deqeueAlpineTag(dockerTags);
+  if (!nodeVersion) {
+    console.log("Nothing to build.")
     return;
   }
 
-  return version;
-}
-
-
-function buildAlpineBuilder(dockerTags, tempDir) {
-  let nodeVersion = getNodeVersion(dockerTags);
-  if (!nodeVersion) return;
-
-  let dockerTag = `${DOCKER_OWNER}/${DOCKER_REPO}:${nodeVersion}`;
+  let dockerTag = `${Config.DOCKER_OWNER}/${Config.DOCKER_ALPINE_IMAGE}:${nodeVersion}`;
   console.log("Building ", dockerTag);
 
   let content = getAlpineBuilderDockerfile(nodeVersion);
@@ -77,15 +48,20 @@ function buildAlpineBuilder(dockerTags, tempDir) {
     return;
   }
   console.log("Build succesful, pushing to Docker Hub.");
-  execSync(`docker push ${dockerTag}`, {stdio: "inherit"});
+  Util.exec(`docker push ${dockerTag}`, {stdio: "inherit"});
+
+  Util.wipeDockerImages();
+  console.log("Alpine build successful:", nodeVersion);
 }
 
 
 function main() {
+  console.log("Alpine builder");
+
   let tempDir = makeTempDir();
   console.log("Using temp directory", tempDir);
 
-  DockerHub.getDockerHubTags(DOCKER_OWNER, DOCKER_REPO)
+  DockerHub.getDockerHubTags(Config.DOCKER_OWNER, Config.DOCKER_ALPINE_IMAGE)
   .then(dockerTags => {
     buildAlpineBuilder(dockerTags, tempDir);
 
