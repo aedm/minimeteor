@@ -33,6 +33,7 @@ function getMeteorDockerfile(meteorVersionString) {
   if (version.isAtLeast([1,4,2,1])) {
     meteorCommandSwitches.push("--allow-superuser");
   }
+  let meteorSwitch = meteorCommandSwitches.join(" ");
 
   return `# Dockerfile
 FROM debian:latest
@@ -44,9 +45,9 @@ RUN date
 RUN curl ${releaseURL} | sh
 
 # Runs an example Meteor project to warm up
-RUN meteor --unsafe-perm create /root/meteortest
+RUN meteor ${meteorSwitch} create /root/meteortest
 WORKDIR /root/meteortest
-RUN meteor ${meteorCommandSwitches.join(" ")} build .
+RUN meteor ${meteorSwitch} build .
 WORKDIR /
 RUN rm -rf /root/meteortest
 RUN echo ${NodeLabel}\`meteor node --version\`  # ${Date.now().toString()}
