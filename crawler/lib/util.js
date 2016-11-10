@@ -42,8 +42,10 @@ function enqueueCommand(command) {
 function exec(command) {
   try {
     execSync(command, {stdio: "inherit"});
+    return true;
   } catch (ex) {
     console.error(ex.toString());
+    return false;
   }
 }
 
@@ -132,20 +134,22 @@ function enqueueAlpineTag(tag) {
  * Dequeue a file based on a list of already built Docker images.
  * @returns tag to build next
  */
-function dequeueBuildTag(file, builtTags) {
+function dequeueBuildTag(file, builtTags, leaveInQueue) {
   let tags = getQueueFile(file);
 
   let tag = null;
   while (tags.length > 0) {
     tag = tags.shift();
     if (!builtTags.find(x => x == tag)) {
-      // Put it back on the end of the list, in case the build fails.
-      tags.push(tag);
+      if (leaveInQueue) {
+        // Put it back on the end of the list, in case the build fails.
+        tags.push(tag);
+      }
       break;
     }
+    tag = null;
   }
   writeQueueFile(file, tags);
-  if (tags.length == 0) tag = null;
   return tag;
 }
 
@@ -155,7 +159,7 @@ function dequeueBuildTag(file, builtTags) {
  * @returns tag to build next
  */
 function deqeueMeteorTag(builtTags) {
-  return dequeueBuildTag(MeteorBuildQueueFile, builtTags);
+  return dequeueBuildTag(MeteorBuildQueueFile, builtTags, false);
 }
 
 /**
@@ -164,12 +168,16 @@ function deqeueMeteorTag(builtTags) {
  * @returns tag to build next
  */
 function deqeueAlpineTag(builtTags) {
-  return dequeueBuildTag(AlpineBuildQueueFile, builtTags);
+  return dequeueBuildTag(AlpineBuildQueueFile, builtTags, true);
 }
 
 function wipeDockerImages() {
   console.log("Removing all Ddocker images");
   exec("docker rm $(docker ps -aq); docker rmi $(docker images -q)");
+}
+
+function sendMail(content) {
+  exec(`echo -e "Subject:[minimeteor]\\n\\n${content}" | sendmail korteur@gmail.com`);
 }
 
 
@@ -185,5 +193,6 @@ module.exports = {
   deqeueAlpineTag,
   spoolMeteorBuilder,
   exec,
-  wipeDockerImages
+  wipeDockerImages,
+  sendMail
 };

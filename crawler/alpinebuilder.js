@@ -44,11 +44,14 @@ function buildAlpineBuilder(dockerTags, tempDir) {
   console.log("Running docker build...");
   let dockerCommand = spawnSync("docker", ["build", "-t", dockerTag, tempDir], {stdio: "inherit"});
   if (dockerCommand.status) {
+    Util.sendMail(`FAILED: ${dockerTag}`);
     console.error("Build failed.");
     return;
   }
   console.log("Build succesful, pushing to Docker Hub.");
-  Util.exec(`docker push ${dockerTag}`, {stdio: "inherit"});
+  if (Util.exec(`docker push ${dockerTag}`)) {
+    Util.sendMail(`${dockerTag} built.`);
+  }
 
   Util.wipeDockerImages();
   console.log("Alpine build successful:", nodeVersion);

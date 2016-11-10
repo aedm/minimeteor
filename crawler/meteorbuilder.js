@@ -79,6 +79,7 @@ function buildMeteor(meteorVersion) {
   dockerProcess.on('close', code => {
     Util.exec(`rm -rf ${tempDir}`);
     if (code) {
+      Util.sendMail(`FAILED: ${dockerTag}`);
       console.error("Build failed. Exit code:", code);
       return;
     }
@@ -91,7 +92,9 @@ function buildMeteor(meteorVersion) {
 
     // Push docker image
     console.log("Pushing image to Docker Hub");
-    Util.exec(`docker push ${dockerTag}`);
+    if (Util.exec(`docker push ${dockerTag}`)) {
+      Util.sendMail(`${dockerTag} built.`);
+    }
 
     Util.wipeDockerImages();
     console.log("Build successful:", dockerTag);
