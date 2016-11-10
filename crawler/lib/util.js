@@ -31,7 +31,7 @@ let AlpineBuildQueueFile = null;
  */
 function enqueueCommand(command) {
   console.log("Enqueueing command: ", command);
-  let batchCommand = `tsp -n bash -c "${command} | logger --tag minimeteor"`;
+  let batchCommand = `tsp -n bash -c "${command} 2>&1 | logger --tag minimeteor"`;
   try {
     execSync(batchCommand, {stdio: "inherit"})
   } catch (ex) {
