@@ -3,15 +3,14 @@
 const spawn = require('child_process').spawn;
 const execSync = require('child_process').execSync;
 const fs = require('fs');
-const DockerHub = require("./lib/dockerhub.js");
-const batch = require("./lib/batch.js");
 const stream = require('stream');
+
+const DockerHub = require("./lib/dockerhub.js");
+const Util = require("./lib/util.js");
+const Config = require("./lib/config.js");
 const Version = require("./lib/version.js");
 
 const NodeLabel = "NODE_VERSION=";
-const QUEUE_FILE = "MINIMETEOR_ALPINE_NODE_BUILD_QUEUE_FILE";
-const DOCKER_OWNER = "aedm";
-const DOCKER_REPO = "meteor";
 
 function makeTempDir() {
   try {
@@ -55,24 +54,13 @@ RUN echo ${NodeLabel}\`meteor node --version\`  # ${Date.now().toString()}
 }
 
 
-function appendNodeVersion(nodeVersion) {
-  let queuePath = process.env[QUEUE_FILE];
-  if (!queuePath) {
-    console.error("Environment variable not found:", QUEUE_FILE);
-    return;
-  }
-  console.log("Enqueueing Node.js version:", nodeVersion);
-  fs.appendFileSync(queuePath, nodeVersion + "\n");
-}
-
-
 function buildMeteor(meteorVersion) {
   console.log("wat");
 
   let tempDir = makeTempDir();
   console.log("Using temp directory", tempDir);
 
-  let dockerTag = `${DOCKER_OWNER}/${DOCKER_REPO}:${meteorVersion}`;
+  let dockerTag = `${Config.DOCKER_OWNER}/${Config.DOCKER_METEOR_IMAGE}:${meteorVersion}`;
   console.log("Building", dockerTag);
 
   let content = getMeteorDockerfile(meteorVersion);
@@ -99,13 +87,15 @@ function buildMeteor(meteorVersion) {
     // Enqueue alpine build
     let nodeVersion = output.split("\n").find(s => s.startsWith(NodeLabel));
     nodeVersion = nodeVersion.substring(NodeLabel.length).replace(/^(v)/, "");
-    appendNodeVersion(nodeVersion);
-    let alpineBuildCommand = `node --harmony ${__dirname}/build-alpinebuilder.js`;
-    batch(alpineBuildCommand);
+    Util.enqueueAlpineTag(nodeVersion);
 
     // Push docker image
     console.log("Pushing image to Docker Hub");
     execSync(`docker push ${dockerTag}`, {stdio: "inherit"});
+
+    // Push remove image
+    console.log("Removing image");
+    execSync(`docker rmi ${dockerTag}`, {stdio: "inherit"});
 
     console.log("Build successful:", dockerTag);
   });
@@ -113,24 +103,37 @@ function buildMeteor(meteorVersion) {
 
 
 function main() {
-  if (process.argv.length != 3) {
-    console.log(`Usage: node build-meteor.js {meteor-version}`);
+  if (process.argv.length > 3) {
+    console.log(`Usage: node build-meteor.js [meteor-version]`);
     process.exit(0);
   }
-
-  if (!process.env[QUEUE_FILE]) {
-    console.error(`Environment variable ${QUEUE_FILE} not found.`);
-    process.exit(1);
+  let versionFromCommandLine = (process.argv.length == 3);
+  let meteorVersion = null;
+  if (versionFromCommandLine) {
+    meteorVersion = process.argv[2];
   }
 
-  let meteorVersion = process.argv[2];
-
-  DockerHub.getDockerHubTags(DOCKER_OWNER, DOCKER_REPO)
+  DockerHub.getDockerHubTags(Config.DOCKER_OWNER, Config.DOCKER_METEOR_IMAGE)
   .then(dockerTags => {
-    if (!dockerTags.find(tag => tag == meteorVersion)) {
-      buildMeteor(meteorVersion);
+    if (versionFromCommandLine) {
+      // Check whether this version if already built
+      if (dockerTags.find(tag => tag == meteorVersion)) {
+        console.log("Already built", meteorVersion);
+        return;
+      }
     } else {
-      console.log("Already built", meteorVersion);
+      // Find a version that's not built yet
+      meteorVersion = Util.deqeueMeteorTag(dockerTags);
+      if (!meteorVersion) {
+        console.log("Nothing to build");
+        return;
+      }
+    }
+    buildMeteor(meteorVersion);
+
+    if (!versionFromCommandLine) {
+      // If the build version comes from the queue, there might be more of it
+      Util.spoolMeteorBuilder();
     }
   });
 }

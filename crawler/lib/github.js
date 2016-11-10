@@ -4,11 +4,19 @@
 
 var GitHubApi = require("github");
 
+const GITHUB_TOKEN = "MINIMETEOR_GITHUB_OAUTH_TOKEN";
+
+const oauthToken = process.env[GITHUB_TOKEN];
+if (!oauthToken) {
+  console.error("GitHub API init error, please set environment variable", GITHUB_TOKEN);
+  process.exit(1);
+}
+
 // Init GitHub API
 var github = new GitHubApi();
 github.authenticate({
   type: "oauth",
-  token: process.env["GITHUB_OAUTH_TOKEN"],
+  token: oauthToken,
 });
 
 
@@ -24,6 +32,7 @@ module.exports.getGithubTags = function (owner, repo) {
           getPage(page + 1);
         } else {
           console.log(`${tags.length} git tags fetched.`);
+          tags.reverse();
           resolve(tags);
         }
       }, (x) => {
