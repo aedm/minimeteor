@@ -177,7 +177,7 @@ function wipeDockerImages() {
 }
 
 function sendMail(content) {
-  exec(`echo -e "Subject:[minimeteor]\\n\\n${content}" | sendmail korteur@gmail.com`);
+  exec(`echo "Subject:[minimeteor]\\n\\n${content}" | sendmail korteur@gmail.com`);
 }
 
 

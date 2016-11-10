@@ -12,7 +12,7 @@ function createBuildList(releaseTags, meteorDockerTags) {
   for (let tag of releaseTags) {
     if (meteorDockerTags.find(x => x == tag)) continue;
     let version = Version.fromString(tag);
-    if (!version || version.isSubversion || version.isLessThan([1,4,2])) continue;
+    if (!version || version.isSubversion || version.isLessThan([1,4])) continue;
     Util.enqueueMeteorTag(tag);
   }
 }
