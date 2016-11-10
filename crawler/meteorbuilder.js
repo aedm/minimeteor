@@ -87,6 +87,12 @@ function buildMeteor(meteorVersion) {
 
     // Enqueue alpine build
     let nodeVersion = output.split("\n").find(s => s.startsWith(NodeLabel));
+    if (!nodeVersion) {
+      console.error("Node version not found, quitting.");
+      Util.sendMail(`FAILED: ${dockerTag}`);
+      return;
+    }
+
     nodeVersion = nodeVersion.substring(NodeLabel.length).replace(/^(v)/, "");
     Util.enqueueAlpineTag(nodeVersion);
 
