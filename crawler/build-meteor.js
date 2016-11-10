@@ -4,7 +4,9 @@ const spawn = require('child_process').spawn;
 const execSync = require('child_process').execSync;
 const fs = require('fs');
 const DockerHub = require("./lib/dockerhub.js");
+const batch = require("./lib/batch.js");
 const stream = require('stream');
+const Version = require("./lib/version.js");
 
 const NodeLabel = "NODE_VERSION=";
 const QUEUE_FILE = "MINIMETEOR_ALPINE_NODE_BUILD_QUEUE_FILE";
@@ -20,7 +22,18 @@ function makeTempDir() {
   }
 }
 
-function getMeteorDockerfile(releaseURL) {
+function getMeteorDockerfile(meteorVersionString) {
+  let releaseURL = "https://install.meteor.com/?release=" + meteorVersionString;
+  let version = Version.fromString(meteorVersionString);
+
+  let meteorCommandSwitches = [];
+  if (version.isAtLeast([1,4,2]) && version.isLessThan([1,4,2,1])) {
+    meteorCommandSwitches.push("--unsafe-perm");
+  }
+  if (version.isAtLeast([1,4,2,1])) {
+    meteorCommandSwitches.push("--allow-superuser");
+  }
+
   return `# Dockerfile
 FROM debian:latest
 
@@ -33,7 +46,7 @@ RUN curl ${releaseURL} | sh
 # Runs an example Meteor project to warm up
 RUN meteor --unsafe-perm create /root/meteortest
 WORKDIR /root/meteortest
-RUN meteor --unsafe-perm build .
+RUN meteor ${meteorCommandSwitches.join(" ")} build .
 WORKDIR /
 RUN rm -rf /root/meteortest
 RUN echo ${NodeLabel}\`meteor node --version\`  # ${Date.now().toString()}
@@ -52,13 +65,6 @@ function appendNodeVersion(nodeVersion) {
 }
 
 
-function batch(command) {
-  console.log("Batching command: ", command);
-  let batchCommand = `echo "${command} >/home/aedm/mm.log" | batch`;
-  execSync(batchCommand, {stdio: "inherit"})
-}
-
-
 function buildMeteor(meteorVersion) {
   console.log("wat");
 
@@ -68,8 +74,7 @@ function buildMeteor(meteorVersion) {
   let dockerTag = `${DOCKER_OWNER}/${DOCKER_REPO}:${meteorVersion}`;
   console.log("Building", dockerTag);
 
-  let releaseURL = "https://install.meteor.com/?release=" + meteorVersion;
-  let content = getMeteorDockerfile(releaseURL);
+  let content = getMeteorDockerfile(meteorVersion);
   fs.writeFileSync(`${tempDir}/Dockerfile`, content);
 
   console.log("Running docker build...");

@@ -5,6 +5,9 @@
 class Version {
   constructor() {
     this.nums = [];
+
+    // Version contains notation, like beta or release candidate
+    this.isSubversion = false;
   }
 
   isAtLeast(versionArray) {
@@ -32,10 +35,14 @@ class Version {
 
   static fromString(versionString) {
     let nums = [];
+    let isSubversion = false;
     let parts = versionString.split(/[\.-]/);
     for (let x of parts) {
       let n = parseInt(x);
-      if (isNaN(n)) break;
+      if (isNaN(n)) {
+        isSubversion = true;
+        break;
+      }
       nums.push(n);
     }
     if (nums.length == 0) {
@@ -45,6 +52,7 @@ class Version {
 
     let version = new Version();
     version.nums = nums;
+    version.isSubversion = isSubversion;
     return version;
   }
 

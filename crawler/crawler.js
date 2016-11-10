@@ -1,16 +1,17 @@
 "use strict";
 
-let Version = require("./lib/version.js");
-let GitHub = require("./lib/github.js");
-let DockerHub = require("./lib/dockerhub.js");
+const Version = require("./lib/version.js");
+const GitHub = require("./lib/github.js");
+const DockerHub = require("./lib/dockerhub.js");
+const batch = require("./lib/batch.js");
 
-const MeteorReleaseTag = "release/METEOR@";
+const METEOR_RELEASE_TAG = "release/METEOR@";
 
 function createBuildList(releaseTags, meteorDockerTags) {
   console.log("Creating build list");
   for (let tag of releaseTags) {
     let version = Version.fromString(tag);
-    if (!version || version.isLessThan([1,4,2,1])) continue;
+    if (!version || version.isSubversion || version.isLessThan([1,4])) continue;
     console.log(tag);
   }
 }
@@ -25,9 +26,9 @@ function main() {
   // Process GitHub tags
   .then(tags => {
     for (let tag of tags) {
-      if (tag.startsWith(MeteorReleaseTag)) {
+      if (tag.startsWith(METEOR_RELEASE_TAG)) {
         //console.log(tag);
-        releaseTags.push(tag.substring(MeteorReleaseTag.length));
+        releaseTags.push(tag.substring(METEOR_RELEASE_TAG.length));
       }
     }
     console.log(`${releaseTags.length} release tags found.`);
