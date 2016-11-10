@@ -11,8 +11,9 @@ function createBuildList(releaseTags, meteorDockerTags) {
   console.log("Creating build list");
   for (let tag of releaseTags) {
     let version = Version.fromString(tag);
-    if (!version || version.isSubversion || version.isLessThan([1,4])) continue;
-    console.log(tag);
+    if (!version || version.isSubversion || version.isLessThan([1,3])) continue;
+    let alpineBuildCommand = `node --harmony ${__dirname}/build-meteor.js ${tag}`;
+    batch(alpineBuildCommand);
   }
 }
 
