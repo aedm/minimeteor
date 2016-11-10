@@ -51,6 +51,8 @@ function buildAlpineBuilder(dockerTags, tempDir) {
   console.log("Build succesful, pushing to Docker Hub.");
   if (Util.exec(`docker push ${dockerTag}`)) {
     Util.sendMail(`${dockerTag} built.`);
+  } else {
+    Util.sendMail(`FAILED: ${dockerTag} was built, but can't be sent to Docker Hub.`);
   }
 
   Util.wipeDockerImages();

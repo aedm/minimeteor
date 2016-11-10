@@ -100,6 +100,8 @@ function buildMeteor(meteorVersion) {
     console.log("Pushing image to Docker Hub");
     if (Util.exec(`docker push ${dockerTag}`)) {
       Util.sendMail(`${dockerTag} built.`);
+    } else {
+      Util.sendMail(`FAILED: ${dockerTag} was built, but can't be sent to Docker Hub.`);
     }
 
     Util.wipeDockerImages();
