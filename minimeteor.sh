@@ -7,10 +7,12 @@ fi
 
 PROJECTDIR=.
 
-TEMPDIR=${mktemp -d}
+TEMPDIR=`mktemp -d`
 echo Using temp dir: $TEMPDIR
 
-DOCKERTAG=$3
+DOCKERTAG=$1
+USERID=`id -u`
+GROUPID=`id -g`
 
 INFO="MINIMETEOR:"
 
@@ -28,6 +30,7 @@ cat >$TEMPDIR/meteorbuild.sh <<EOM
 echo $INFO Meteor container started
 echo $INFO Copying project into build container
 mkdir /app
+
 cp -r /dockerhost/source /app/source
 
 echo $INFO Installing NPM build dependencies
@@ -39,6 +42,7 @@ meteor --allow-superuser build --directory /app/build
 
 echo $INFO Copying bundle to temp directory from inside of the build container
 cp -r /app/build/bundle /dockerhost/bundle
+chown -R $USERID:$GROUPID /dockerhost/bundle
 
 echo $INFO Meteor container finished
 EOM
@@ -67,14 +71,16 @@ npm install
 
 echo $INFO Copying bundle to temp directory from inside of the build container
 cp -r /app/bundle /dockerhost/bundle-alpine
+chown -R $USERID:$GROUPID /dockerhost/bundle-alpine
 
 echo $INFO Meteor container finished
 EOM
 
 echo $INFO Setting executable rights on Alpine build script
 chmod +x $TEMPDIR/alpinebuild.sh
+mkdir $TEMPDIR/bundle-alpine
 echo $INFO Starting Alpine build container
-docker run -v $TEMPDIR:/dockerhost --rm aedm/alpinebuilder:4.6.1 /dockerhost/alpinebuild.sh
+docker run -v $TEMPDIR:/dockerhost --rm aedm/meteor-alpinebuild:4.6.1 /dockerhost/alpinebuild.sh
 
 
 # ------------------------------
@@ -84,7 +90,7 @@ docker run -v $TEMPDIR:/dockerhost --rm aedm/alpinebuilder:4.6.1 /dockerhost/alp
 echo $INFO Writing Dockerfile
 cat >$TEMPDIR/bundle-alpine/Dockerfile <<EOM
 # Dockerfile
-FROM mhart/alpine-node:base-4.6.1
+FROM mhart/alpine-node:4.6.1
 ADD . /app
 WORKDIR /app
 ENV PORT 80
@@ -93,6 +99,8 @@ CMD node main.js
 EOM
 echo $INFO Starting docker build
 docker build -t $DOCKERTAG $TEMPDIR/bundle-alpine
+
+rm -rf $TEMPDIR
 
 echo $INFO Build finished.
 
