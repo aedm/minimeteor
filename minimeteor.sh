@@ -78,7 +78,7 @@ EOM
 
 echo $INFO Setting executable rights on Alpine build script
 chmod +x $TEMPDIR/alpinebuild.sh
-mkdir $TEMPDIR/bundle-alpine
+#mkdir $TEMPDIR/bundle-alpine
 echo $INFO Starting Alpine build container
 docker run -v $TEMPDIR:/dockerhost --rm aedm/meteor-alpinebuild:4.6.1 /dockerhost/alpinebuild.sh
 
