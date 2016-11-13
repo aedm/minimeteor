@@ -34,22 +34,23 @@ function getMeteorDockerfile(meteorVersionString) {
   }
   let meteorSwitch = meteorCommandSwitches.join(" ");
 
+  // Installed packages:
+  // - curl: to te able to download Meteor
+  // - procps, python, g++, make: to build NPM libraries
+  // - sudo: to run tools as non-root
+  // - locales: for MongoDB
+  // - libfontconfig: for PhantomJS (Meteor testing)
   return `# Dockerfile
 FROM debian:wheezy-slim
 
 # Install tools
-RUN apt-get update
-RUN apt-get -y install curl procps python g++ make sudo locales
-
-# Setup locales for MongoDB
-RUN locale-gen en_US.UTF-8
-RUN localedef -i en_GB -f UTF-8 en_US.UTF-8
-
-# Install Meteor
-RUN curl ${releaseURL} | sh
-
-# Print Node.js version
-RUN echo ${NodeLabel}\`meteor node --version\`  # ${Date.now().toString()}
+RUN apt-get update \
+ && apt-get -y install curl procps python g++ make sudo locales libfontconfig \
+ && apt-get clean \
+ && locale-gen en_US.UTF-8 \
+ && localedef -i en_GB -f UTF-8 en_US.UTF-8 \
+ && curl ${releaseURL} | sh \
+ && echo ${NodeLabel}\`meteor node --version\`  # ${Date.now().toString()}
 `;
 }
 
