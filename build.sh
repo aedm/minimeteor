@@ -109,7 +109,7 @@ EXPOSE 80
 CMD node main.js
 EOM
 echo "$INFO" Starting docker build
-docker build -t $DOCKERTAG $TEMPDIR/bundle-alpine
+docker build $DOCKERTAG $TEMPDIR/bundle-alpine
 
 # Removes temp directory
 rm -rf $TEMPDIR
