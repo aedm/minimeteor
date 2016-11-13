@@ -55,8 +55,6 @@ RUN echo ${NodeLabel}\`meteor node --version\`  # ${Date.now().toString()}
 
 
 function buildMeteor(meteorVersion) {
-  console.log("wat");
-
   let tempDir = makeTempDir();
   console.log("Using temp directory", tempDir);
 
