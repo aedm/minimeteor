@@ -35,7 +35,7 @@ function getMeteorDockerfile(meteorVersionString) {
   let meteorSwitch = meteorCommandSwitches.join(" ");
 
   return `# Dockerfile
-FROM debian:latest
+FROM debian:wheezy-slim
 
 # Install tools
 RUN apt-get update
