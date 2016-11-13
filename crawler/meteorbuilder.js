@@ -37,18 +37,18 @@ function getMeteorDockerfile(meteorVersionString) {
   return `# Dockerfile
 FROM debian:latest
 
-# Install Meteor
+# Install tools
 RUN apt-get update
-RUN apt-get -y install curl procps python g++ make
-RUN date
+RUN apt-get -y install curl procps python g++ make sudo locales
+
+# Setup locales for MongoDB
+RUN locale-gen en_US.UTF-8
+RUN localedef -i en_GB -f UTF-8 en_US.UTF-8
+
+# Install Meteor
 RUN curl ${releaseURL} | sh
 
-# Runs an example Meteor project to warm up
-RUN meteor ${meteorSwitch} create /root/meteortest
-WORKDIR /root/meteortest
-RUN meteor ${meteorSwitch} build .
-WORKDIR /
-RUN rm -rf /root/meteortest
+# Print Node.js version
 RUN echo ${NodeLabel}\`meteor node --version\`  # ${Date.now().toString()}
 `;
 }
