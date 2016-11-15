@@ -44,15 +44,20 @@ echo $INFO Copying project into build container
 mkdir /app
 
 cp -r /dockerhost/source /app/source
+cd /app/source
+
+echo $INFO Installing tools
+apt-get update
+apt-get -y install curl procps python g++ make sudo
+curl "https://install.meteor.com/" | sh
 
 echo $INFO Installing NPM build dependencies
-cd /app/source
 meteor npm install
 
 echo $INFO Performing Meteor build
 meteor --allow-superuser build --directory /app/build
 
-echo $INFO Copying bundle to temp directory from in side of the build container
+echo $INFO Copying bundle from build container to temp directory
 cp -r /app/build/bundle /dockerhost/bundle
 chown -R $USERID:$GROUPID /dockerhost/bundle
 
@@ -62,8 +67,12 @@ EOM
 echo "$INFO" Setting executable rights on build script
 chmod +x $TEMPDIR/meteorbuild.sh
 echo "$INFO" Starting Meteor container
-docker run -v $TEMPDIR:/dockerhost --rm aedm/meteor:1.4.2.1 /dockerhost/meteorbuild.sh
+docker run -v $TEMPDIR:/dockerhost --rm debian /dockerhost/meteorbuild.sh
 
+# ------------------------------
+# Get Node version
+# ------------------------------
+NODE_VERSION=`sed 's/v//g' $TEMPDIR/bundle/.node_version.txt`
 
 # ------------------------------
 # Alpine build
@@ -77,6 +86,9 @@ echo $INFO Copying project into build container
 mkdir /app
 cp -r /dockerhost/bundle /app/bundle
 
+echo ${INFO} Installing tools
+apk add --no-cache make gcc g++ python
+
 echo $INFO Installing NPM build dependencies
 cd /app/bundle/programs/server
 npm install
@@ -89,9 +101,9 @@ echo $INFO Meteor container finished
 EOM
 
 echo "$INFO" Setting executable rights on Alpine build script
-chmod +x $TEMPDIR/alpinebuild.sh
+chmod +x ${TEMPDIR}/alpinebuild.sh
 echo "$INFO" Starting Alpine build container
-docker run -v $TEMPDIR:/dockerhost --rm aedm/meteor-alpinebuild:4.6.1 /dockerhost/alpinebuild.sh
+docker run -v ${TEMPDIR}:/dockerhost --rm mhart/alpine-node:${NODE_VERSION} /dockerhost/alpinebuild.sh
 
 
 # ------------------------------
@@ -101,7 +113,7 @@ docker run -v $TEMPDIR:/dockerhost --rm aedm/meteor-alpinebuild:4.6.1 /dockerhos
 echo "$INFO" Writing Dockerfile
 cat >$TEMPDIR/bundle-alpine/Dockerfile <<EOM
 # Dockerfile
-FROM mhart/alpine-node:4.6.1
+FROM mhart/alpine-node:${NODE_VERSION}
 ADD . /app
 WORKDIR /app
 ENV PORT 80
@@ -115,4 +127,3 @@ docker build $DOCKERTAG $TEMPDIR/bundle-alpine
 rm -rf $TEMPDIR
 
 echo "$INFO" Build finished.
-
