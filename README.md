@@ -36,8 +36,8 @@ If you know about any other projects, please create an issue, and I'll include t
 
 ### How does it work?
 
-The shell script version has three passes to build the image:
- 1. A Debian container build the Meteor bundle, and copies it back to the hsot machine using Docker volumes.
+The shell script version uses three passes to build the image:
+ 1. A Debian container builds the Meteor bundle, and copies it back to the hsot machine using Docker volumes.
  2. An Alpine bundle rebuilds the binary NPM packages, because Alpine's CRT isn't fully compatible with Debian's.
  3. The final build is copied into a new [alpine-node](https://hub.docker.com/r/mhart/alpine-node/) container.
  
