@@ -41,7 +41,7 @@ The shell script version uses three passes to build the image:
  2. An Alpine bundle rebuilds the binary NPM packages, because Alpine's CRT isn't fully compatible with Debian's.
  3. The final build is copied into a new [alpine-node](https://hub.docker.com/r/mhart/alpine-node/) container.
  
-The Dockerfile version uses a different approach. It installs Meteor and all requires build tools into a debian/slim container, and after building the bundle, it copies the Node.js executable from the Meteor installation into the project directory, and removes all tools.
+The Dockerfile version uses a different approach. It installs Meteor and some build tools into a debian/slim container, builds the bundle, copies the Node.js executable from the Meteor installation into the project directory, and removes all tools.
 
 ### Which Node.js version does MiniMeteor use?
 
