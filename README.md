@@ -1,18 +1,18 @@
 # MiniMeteor
 
-Build a **_small_** Docker image from your Meteor applications **_easily_**.
+Build a **_small_** Docker image from your Meteor application **_easily_**.
 
 ## Usage
 
 ```$ curl https://aedm.github.io/minimeteor/build.sh | sh -s```*```myDockerTag[s]```*
 
-Just execute this command in your project directory. It builds a Docker image from your application. Meteor isn't even required, only Docker.
+Just execute this in your project directory and it builds a Docker image. You don't need Meteor to be installed, only Docker.
 
 #### ...or create a Dockerfile instead.
 
 `FROM aedm/minimeteor`
 
-And then run `docker build`, that's all.
+And then run `$ docker build -t myDockerTag .`
 
 ## Okay, what's this?
 
@@ -32,7 +32,7 @@ If you know about any other projects, please create an issue, and I'll include t
 
 ### How to run the Docker image?
 
-`$ docker run -d -e ROOT_URL=... -e MONGO_URL=... -e PORT=3000 -p 80:3000 myDockerTag`
+`$ docker run -d -e ROOT_URL=... -e MONGO_URL=... -p 80:80 myDockerTag`
 
 ### How does it work?
 
