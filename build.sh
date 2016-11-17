@@ -40,26 +40,28 @@ echo "$INFO" Writing Meteor build script
 cat >$TEMPDIR/meteorbuild.sh <<EOM
 #!/bin/sh
 echo "$INFO" Meteor container started
-echo $INFO Copying project into build container
 
-useradd --uid $USERID -m user
-
-sudo -u user cp -r /dockerhost/source /home/user
-cd /home/user
-
+echo $INFO Updating apt
+apt-get -qq update
 echo $INFO Installing tools
-apt-get update
-apt-get -y install curl procps python g++ make sudo
+apt-get -qq -o Dpkg::Use-Pty=0 install curl procps python g++ make sudo >/dev/null
+
+echo $INFO Copying files
+useradd --uid $USERID -m user
+sudo -u user cp -r /dockerhost/source /home/user/
+cd /home/user/source
+
 sudo -u user curl "https://install.meteor.com/" | sh
 
 echo $INFO Installing NPM build dependencies
-sudo -u user meteor npm install
+cd /home/user/source
+sudo -u user meteor npm --loglevel=silent install
 
 echo $INFO Performing Meteor build
-sudo -u user meteor build --directory /app/build
+sudo -u user meteor build --directory /home/user/build
 
 echo $INFO Copying bundle from build container to temp directory
-sudo -u user cp -r /home/user /dockerhost/bundle
+sudo -u user cp -r /home/user/build/bundle /dockerhost/bundle
 
 echo $INFO Meteor container finished
 EOM
@@ -81,21 +83,19 @@ NODE_VERSION=`sed 's/v//g' $TEMPDIR/bundle/.node_version.txt`
 echo "$INFO" Writing Alpine build script
 cat >$TEMPDIR/alpinebuild.sh <<EOM
 #!/bin/sh
-echo $INFO Alpine container started
-echo $INFO Copying project into build container
-mkdir /app
-cp -r /dockerhost/bundle /app/bundle
+echo $INFO Alpine container started, installing tools
+apk add --no-cache make gcc g++ python sudo
 
-echo ${INFO} Installing tools
-apk add --no-cache make gcc g++ python
+echo $INFO Copying project into build container
+adduser -D -u $USERID -h /home/user user
+sudo -u user cp -r /dockerhost/bundle /home/user/bundle
 
 echo $INFO Installing NPM build dependencies
-cd /app/bundle/programs/server
-npm install
+cd /home/user/bundle/programs/server
+sudo -u user npm install
 
 echo $INFO Copying bundle to temp directory from inside of the build container
-cp -r /app/bundle /dockerhost/bundle-alpine
-chown -R $USERID:$GROUPID /dockerhost/bundle-alpine
+sudo -u user cp -r /home/user/bundle /dockerhost/bundle-alpine
 
 echo $INFO Meteor container finished
 EOM
@@ -114,16 +114,19 @@ echo "$INFO" Writing Dockerfile
 cat >$TEMPDIR/bundle-alpine/Dockerfile <<EOM
 # Dockerfile
 FROM mhart/alpine-node:${NODE_VERSION}
-ADD . /app
-WORKDIR /app
-ENV PORT 80
-EXPOSE 80
+RUN adduser -D -h /home/user user
+ADD . /home/user
+WORKDIR /home/user
+ENV PORT 3000
+EXPOSE 3000
+USER user
 CMD node main.js
 EOM
 echo "$INFO" Starting docker build
 docker build $DOCKERTAG $TEMPDIR/bundle-alpine
 
 # Removes temp directory
+echo $INFO Removing temp directory $TEMPDIR
 rm -rf $TEMPDIR
 
 echo "$INFO" Build finished.
