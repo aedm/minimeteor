@@ -41,10 +41,11 @@ cat >$TEMPDIR/meteorbuild.sh <<EOM
 #!/bin/sh
 echo "$INFO" Meteor container started
 echo $INFO Copying project into build container
-mkdir /app
 
-cp -r /dockerhost/source /app/source
-cd /app/source
+useradd --uid $USERID -m user
+
+sudo -u user cp -r /dockerhost/source /home/user
+cd /home/user
 
 echo $INFO Installing tools
 apt-get update
@@ -52,14 +53,13 @@ apt-get -y install curl procps python g++ make sudo
 curl "https://install.meteor.com/" | sh
 
 echo $INFO Installing NPM build dependencies
-meteor npm install
+sudo -u user meteor npm install
 
 echo $INFO Performing Meteor build
-meteor --allow-superuser build --directory /app/build
+sudo -u user meteor build --directory /app/build
 
 echo $INFO Copying bundle from build container to temp directory
-cp -r /app/build/bundle /dockerhost/bundle
-chown -R $USERID:$GROUPID /dockerhost/bundle
+sudo -u user cp -r /home/user /dockerhost/bundle
 
 echo $INFO Meteor container finished
 EOM
