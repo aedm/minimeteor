@@ -50,7 +50,7 @@ cd /home/user
 echo $INFO Installing tools
 apt-get update
 apt-get -y install curl procps python g++ make sudo
-curl "https://install.meteor.com/" | sh
+sudo -u user curl "https://install.meteor.com/" | sh
 
 echo $INFO Installing NPM build dependencies
 sudo -u user meteor npm install
