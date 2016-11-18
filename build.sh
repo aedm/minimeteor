@@ -56,7 +56,8 @@ apt-get -qq install curl procps python g++ make sudo >/dev/null
 
 echo ${INFO} Copying files
 ${USERADD_COMMAND}
-${SUDO} cp -r /dockerhost/source ${USERHOME}
+cp -r /dockerhost/source ${USERHOME}
+chown -R ${USERNAME} ${USERHOME}/source
 cd ${USERHOME}/source
 
 ${SUDO} curl "https://install.meteor.com/" | sh
@@ -69,7 +70,7 @@ echo ${INFO} Performing Meteor build
 ${SUDO} meteor build --directory ${USERHOME}/build
 
 echo ${INFO} Copying bundle from build container to temp directory
-${SUDO} cp -r ${USERHOME}/build/bundle /dockerhost/bundle
+cp -r ${USERHOME}/build/bundle /dockerhost/bundle
 
 echo ${INFO} Meteor container finished
 EOM
