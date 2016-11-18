@@ -7,7 +7,6 @@ apt-get -y install curl procps python g++ make sudo >/dev/null
 # Create non-root user
 useradd -m user
 sudo -u user cp -r /app /home/user/
-ls /home/user
 cd /home/user/app
 
 # Install Meteor
@@ -21,7 +20,6 @@ sudo -u user meteor build --directory /home/user/meteor-app
 
 # Install NPM packages in the bundle
 cd /home/user/meteor-app/bundle/programs/server
-pwd
 sudo -u user meteor npm install
 
 # Copy Node.js executable from Meteor distribution
@@ -37,5 +35,3 @@ rm -rf /home/user/.meteor
 apt-get -y --purge autoremove curl procps python g++ make
 apt-get -y clean
 rm -rf /var/lib/apt/lists/*
-
-ls -la /home/user
