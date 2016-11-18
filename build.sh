@@ -28,12 +28,9 @@ ADDUSER_COMMAND="adduser -D -u $USERID -h $USERHOME $USERNAME"  # Alpine
 USERADD_COMMAND="useradd --uid $USERID -m $USERNAME"  # Debian
 SUDO="sudo -u $USERNAME"
 if [ ${USERID} -eq 0 ]; then
-    # uid==0 is root, don't create user inside container
-    USERNAME="root"
-    USERHOME="/root"
-    ADDUSER_COMMAND=""
-    USERADD_COMMAND=""
-    SUDO=""
+    # uid==0 is root, don't try to pass uid to adduser/useradd
+    ADDUSER_COMMAND="adduser -D -h $USERHOME $USERNAME"  # Alpine
+    USERADD_COMMAND="useradd -m $USERNAME"  # Debian
 fi
 
 # Log to stdout
