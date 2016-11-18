@@ -97,14 +97,15 @@ apk add --no-cache make gcc g++ python sudo
 
 echo ${INFO} Copying project into build container
 ${ADDUSER_COMMAND}
-${SUDO} cp -r /dockerhost/bundle ${USERHOME}/bundle
+cp -r /dockerhost/bundle ${USERHOME}/bundle
+chown -R ${USERNAME} ${USERHOME}/bundle
 
 echo ${INFO} Installing NPM build dependencies
 cd ${USERHOME}/bundle/programs/server
 ${SUDO} npm install
 
 echo ${INFO} Copying bundle to temp directory from inside of the build container
-${SUDO} cp -r ${USERHOME}/bundle /dockerhost/bundle-alpine
+cp -r ${USERHOME}/bundle /dockerhost/bundle-alpine
 
 echo ${INFO} Meteor container finished
 EOM
