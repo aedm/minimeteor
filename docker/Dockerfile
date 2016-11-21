@@ -5,6 +5,7 @@ ADD ./onbuild.sh /minimeteor/
 
 ONBUILD ADD . /app
 ONBUILD WORKDIR /app
+ONBUILD ENV DEBIAN_FRONTEND noninteractive
 ONBUILD RUN /minimeteor/onbuild.sh
 ONBUILD ENV PORT 3000
 ONBUILD EXPOSE 3000
