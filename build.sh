@@ -15,9 +15,12 @@ echo Using temp dir: ${TEMPDIR}
 
 # Assemble a list of Docker tags
 DOCKERTAG=""
+CONTAINERNAME="minimeteor"
 for arg in "$@"
 do
   DOCKERTAG="$DOCKERTAG -t $arg"
+  argesc=`echo "$arg" | sed "s/[://]/--/g"`
+  CONTAINERNAME="$CONTAINERNAME-$argesc"
 done
 
 # Containers will use the current user's id to perform non-root tasks (unless the user is root)
@@ -38,6 +41,8 @@ INFO="[minimeteor]"
 
 echo ${INFO} Copying project files to temp directory
 cp -r ${PROJECTDIR} ${TEMPDIR}/source
+rm -rf ${TEMPDIR}/source/node_modules
+rm -rf ${TEMPDIR}/source/.meteor/local
 
 
 # ------------------------------
@@ -70,15 +75,16 @@ echo ${INFO} Performing Meteor build
 ${SUDO} meteor build --directory ${USERHOME}/build
 
 echo ${INFO} Copying bundle from build container to temp directory
-cp -r ${USERHOME}/build/bundle /dockerhost/bundle
+${SUDO} cp -r ${USERHOME}/build/bundle /dockerhost
 
-echo ${INFO} Meteor container finished
+echo ${INFO} Meteor build container finished
 EOM
 
 echo ${INFO} Setting executable rights on build script
 chmod +x ${TEMPDIR}/meteorbuild.sh
+mkdir ${TEMPDIR}/bundle
 echo ${INFO} Starting Meteor container
-docker run -v ${TEMPDIR}:/dockerhost --rm debian /dockerhost/meteorbuild.sh
+docker run -v ${TEMPDIR}:/dockerhost --rm --name ${CONTAINERNAME} debian /dockerhost/meteorbuild.sh
 
 # ------------------------------
 # Get Node version
@@ -97,24 +103,23 @@ apk add --no-cache make gcc g++ python sudo
 
 echo ${INFO} Copying project into build container
 ${ADDUSER_COMMAND}
-cp -r /dockerhost/bundle ${USERHOME}/bundle
-chown -R ${USERNAME} ${USERHOME}/bundle
+cp -r /dockerhost/bundle ${USERHOME}/bundle-alpine
+chown -R ${USERNAME} ${USERHOME}/bundle-alpine
 
 echo ${INFO} Installing NPM build dependencies
-cd ${USERHOME}/bundle/programs/server
+cd ${USERHOME}/bundle-alpine/programs/server
 ${SUDO} npm install
 
 echo ${INFO} Copying bundle to temp directory from inside of the build container
-cp -r ${USERHOME}/bundle /dockerhost/bundle-alpine
+${SUDO} cp -r ${USERHOME}/bundle-alpine /dockerhost/bundle-alpine
 
-echo ${INFO} Meteor container finished
+echo ${INFO} Alpine build container finished
 EOM
 
 echo ${INFO} Setting executable rights on Alpine build script
 chmod +x ${TEMPDIR}/alpinebuild.sh
 echo ${INFO} Starting Alpine build container
-docker run -v ${TEMPDIR}:/dockerhost --rm mhart/alpine-node:${NODE_VERSION} /dockerhost/alpinebuild.sh
-
+docker run -v ${TEMPDIR}:/dockerhost --rm --name ${CONTAINERNAME} mhart/alpine-node:${NODE_VERSION} /dockerhost/alpinebuild.sh
 
 # ------------------------------
 # Docker image build
