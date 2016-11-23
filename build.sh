@@ -6,6 +6,9 @@ if [ "$#" -eq 0 ]; then
     exit
 fi
 
+# Log to stdout
+INFO="[minimeteor]"
+
 # The project directory is always the current directory
 PROJECTDIR=.
 
@@ -30,14 +33,14 @@ USERHOME="/home/$USERNAME"
 ADDUSER_COMMAND="adduser -D -u $USERID -h $USERHOME $USERNAME"  # Alpine
 USERADD_COMMAND="useradd --uid $USERID -m $USERNAME"  # Debian
 SUDO="sudo -u $USERNAME"
+CPSUDO=${SUDO}
 if [ ${USERID} -eq 0 ]; then
-    # uid==0 is root, don't try to pass uid to adduser/useradd
-    ADDUSER_COMMAND="adduser -D -h $USERHOME $USERNAME"  # Alpine
-    USERADD_COMMAND="useradd -m $USERNAME"  # Debian
+  # uid==0 is root, don't try to pass uid to adduser/useradd
+  echo ${INFO} Building as 'root'
+  ADDUSER_COMMAND="adduser -D -h $USERHOME $USERNAME"  # Alpine
+  USERADD_COMMAND="useradd -m $USERNAME"  # Debian
+  CPSUDO=""  # Copy the files back as root
 fi
-
-# Log to stdout
-INFO="[minimeteor]"
 
 echo ${INFO} Copying project files to temp directory
 cp -r ${PROJECTDIR} ${TEMPDIR}/source
@@ -75,7 +78,7 @@ echo ${INFO} Performing Meteor build
 ${SUDO} meteor build --directory ${USERHOME}/build
 
 echo ${INFO} Copying bundle from build container to temp directory
-${SUDO} cp -r ${USERHOME}/build/bundle /dockerhost
+${CPSUDO} cp -r ${USERHOME}/build/bundle /dockerhost
 
 echo ${INFO} Meteor build container finished
 EOM
@@ -111,7 +114,7 @@ cd ${USERHOME}/bundle-alpine/programs/server
 ${SUDO} npm install
 
 echo ${INFO} Copying bundle to temp directory from inside of the build container
-${SUDO} cp -r ${USERHOME}/bundle-alpine /dockerhost/bundle-alpine
+${CPSUDO} cp -r ${USERHOME}/bundle-alpine /dockerhost/bundle-alpine
 
 echo ${INFO} Alpine build container finished
 EOM
