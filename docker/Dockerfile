@@ -3,6 +3,7 @@ FROM debian:wheezy-slim
 
 ADD ./onbuild.sh /minimeteor/
 
+ONBUILD ARG NPM_TOKEN
 ONBUILD ADD . /app
 ONBUILD WORKDIR /app
 ONBUILD ENV DEBIAN_FRONTEND noninteractive
