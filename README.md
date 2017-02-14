@@ -57,3 +57,8 @@ No, MiniMeteor runs Meteor and Node.js as a non-root user.
 #### Can I make it work with Meteor versions below 1.3.3?
 
 The Dockerfile version should work with Meteor 1.3. It's unknown whether it works with versions below that. The script version requires `fibers@1.0.13` which was added in Meteor 1.3.3. 
+
+
+## Do you accept pull requests?
+
+Yes. Please note that they might take a while, since my test framework performs a build against *every* Meteor version (above 1.3.3) to make sure it doesn't break older projects. And it runs on a potato. 
