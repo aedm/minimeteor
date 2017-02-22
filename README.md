@@ -4,7 +4,11 @@ MiniMeteor is an effort to simplify Docker image creation for Meteor projects. W
 
 ## Usage
 
+There are two options: build by simply invoking a script, or create your Dockerfile.
+
 #### First method: execute a script
+
+*Best for continuous integration services, eg. CircleCI, Travis, GitLab, etc.*
 
 ```$ curl https://aedm.github.io/minimeteor/build.sh | sh -s```*```myDockerTag[s]```*
 
@@ -12,9 +16,11 @@ Execute this in your project directory and it builds a Docker image. You don't n
 
 #### Second method: use a Dockerfile
 
+*Good fit for automatic builds on Docker Hub, Quay.io, etc.*
+
 `FROM aedm/minimeteor`
 
-And then run `$ docker build -t myDockerTag .`
+And then run `$ docker build -t myDockerTag .` (or let Docker Hub do it automatically)
 
 
 ## How to run the Docker image?
@@ -22,6 +28,15 @@ And then run `$ docker build -t myDockerTag .`
 MiniMeteor exposes port 3000 by default.
 
 `$ docker run -d -e ROOT_URL=... -e MONGO_URL=... -p 80:3000 myDockerTag`
+
+
+## Build options
+
+#### NPM_TOKEN 
+
+Use private NPM modules. (Works with Dockerfile only.)
+ 
+`$ docker build --build-arg NPM_TOKEN={your-private-npm-token} -t myDockerTag .`
 
 
 ## How does it work?
@@ -57,3 +72,8 @@ No, MiniMeteor runs Meteor and Node.js as a non-root user.
 #### Can I make it work with Meteor versions below 1.3.3?
 
 The Dockerfile version should work with Meteor 1.3. It's unknown whether it works with versions below that. The script version requires `fibers@1.0.13` which was added in Meteor 1.3.3. 
+
+
+## Do you accept pull requests?
+
+Yes. Please note that they might take a while, since my test framework performs a build against *every* Meteor version (above 1.3.3) to make sure it doesn't break older projects. And it runs on a potato. 
