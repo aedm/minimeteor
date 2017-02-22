@@ -12,6 +12,12 @@ rm -rf /home/user/app/.meteor/local
 rm -rf /home/user/app/node_modules
 cd /home/user/app
 
+# Setup auth for private npm modules
+if [ -n $NPM_TOKEN ]
+then
+  echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
+fi
+
 # Install Meteor
 echo [minimeteor] Installing Meteor
 sudo -u user curl "https://install.meteor.com/" | sh
