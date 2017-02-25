@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# This script runs only when a Docker image is being built based on aedm/minimeteor.
+
 # Install build tools
 echo [minimeteor] Installing build tools
 apt-get -qq update
