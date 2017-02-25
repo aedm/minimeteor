@@ -22,6 +22,6 @@ else
   exit 1
 fi
 
-# Runs the webapp
+export PORT=${PORT:-80}
 node main.js
 
