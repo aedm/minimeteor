@@ -1,5 +1,5 @@
 #!/bin/sh
-
+set -exov
 # This script runs only when a Docker image is being built based on aedm/minimeteor.
 
 # Install build tools
