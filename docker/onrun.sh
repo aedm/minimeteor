@@ -1,6 +1,6 @@
 #!/bin/sh
-
-# This script runs only when a MiniMeteor is used as a bundle runner, eg. for MeteorUp
+# This script runs only when a MiniMeteor is used as a bundle runner, eg. for MeteorUp.
+# It's ignored when executing "docker build", in that case "build.sh" is used.
 
 # Installs build tools
 apt-get -qq update

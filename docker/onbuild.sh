@@ -1,6 +1,9 @@
 #!/bin/sh
-set -exov
 # This script runs only when a Docker image is being built based on aedm/minimeteor.
+# MeteorUp executes a "docker run", and "onrun.sh" is executed instead of this one.
+
+# Fail and exit if any build command fails below
+set -exov
 
 # Install build tools
 echo [minimeteor] Installing build tools
@@ -39,6 +42,10 @@ sudo -u user meteor npm install
 
 # Copy Node.js executable from Meteor distribution
 cp `sudo -u user meteor node -e "console.log(process.argv[0]);"` ./
+
+# Everything we need to run the app was done by now.
+# Ignore errors during cleanup.
+set +exov
 
 # Remove Meteor
 echo [minimeteor] Cleaning up
