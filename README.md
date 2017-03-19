@@ -39,6 +39,12 @@ Use private NPM modules. (Works with Dockerfile only.)
 `$ docker build --build-arg NPM_TOKEN={your-private-npm-token} -t myDockerTag .`
 
 
+## Troubleshooting
+
+#### Build fails on Docker Cloud: _"tar: Directory renamed before its status could be extracted"_
+By default Docker Cloud uses "small" build instances. Use "medium" or "large" build nodes instead. 
+
+
 ## How does it work?
 
 The shell script version uses Alpine Linux to minimize footprint. It runs several passes to build the bundle and recompile NPM binaries for Alpine. The final build is copied into an [alpine-node](https://hub.docker.com/r/mhart/alpine-node/) container.
