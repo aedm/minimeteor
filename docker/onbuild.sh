@@ -8,7 +8,7 @@ set -exov
 # Install build tools
 echo [minimeteor] Installing build tools
 apt-get -qq update
-apt-get -y install curl procps python g++ make sudo >/dev/null
+apt-get -y install curl procps python git g++ make sudo >/dev/null
 
 # Create non-root user
 useradd -m user
@@ -56,6 +56,6 @@ rm -rf /home/user/.meteor
 rm -rf /tmp
 
 # Remove build tools and empty cache
-apt-get -y --purge autoremove curl procps python g++ make
+apt-get -y --purge autoremove curl procps python git g++ make
 apt-get -y clean
 rm -rf /var/lib/apt/lists/*
