@@ -60,7 +60,7 @@ echo ${INFO} Meteor container started
 echo ${INFO} Updating apt
 apt-get -qq update
 echo ${INFO} Installing tools
-apt-get -qq install curl procps python g++ make sudo >/dev/null
+apt-get -qq install curl procps python g++ make sudo git >/dev/null
 
 echo ${INFO} Copying files
 ${USERADD_COMMAND}
@@ -102,7 +102,7 @@ echo ${INFO} Writing Alpine build script
 cat >$TEMPDIR/alpinebuild.sh <<EOM
 #!/bin/sh
 echo ${INFO} Alpine container started, installing tools
-apk add --no-cache make gcc g++ python sudo
+apk add --no-cache make gcc g++ python sudo git
 
 echo ${INFO} Copying project into build container
 ${ADDUSER_COMMAND}
