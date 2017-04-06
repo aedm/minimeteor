@@ -4,7 +4,7 @@
 
 # Installs build tools
 apt-get -qq update
-apt-get -y install curl procps python g++ make sudo git >/dev/null
+apt-get -y install curl procps python g++ make sudo git bzip2 >/dev/null
 
 # Installs Node 4.x
 curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
