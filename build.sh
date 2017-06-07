@@ -13,7 +13,7 @@ INFO="[minimeteor]"
 PROJECTDIR=.
 
 # Create a temporary directory
-TEMPDIR=`mktemp -d`
+TEMPDIR=`mktemp -d /tmp/minimeteor-XXXXXXXX`
 echo Using temp dir: ${TEMPDIR}
 
 # Assemble a list of Docker tags
