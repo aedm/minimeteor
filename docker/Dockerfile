@@ -1,5 +1,5 @@
 # Dockerfile
-FROM debian:wheezy-slim
+FROM debian:jessie-slim
 
 ADD ./*.sh /minimeteor/
 
